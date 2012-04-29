@@ -1,0 +1,14 @@
+Manifest-Version: 1.0
+Implementation-Title: kindleTouchJenkinsMonitor
+Extension-List: SDK
+Implementation-Version: 0.0.1-SNAPSHOT
+SDK-Specification-Version: 2.1
+Built-By: JhacK
+Created-By: Maven Integration for Eclipse
+Implementation-Vendor: Giacomo Boccardo
+Implementation-Vendor-Id: it.jhack.kindle
+Build-Jdk: 1.6.0_31
+Description: Test!
+SDK-Extension-Name: com.amazon.kindle.kindlet
+Main-Class: it.jhack.kindle.kindleTouchJenkinsMonitor.Main
+
