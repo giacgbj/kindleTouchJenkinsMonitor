@@ -3,13 +3,23 @@
 	<modelVersion>4.0.0</modelVersion>
 
 	<groupId>it.jhack.kindle</groupId>
-	<artifactId>helloWorld</artifactId>
+	<artifactId>kindleTouchJenkinsMonitor</artifactId>
 	<version>0.0.1-SNAPSHOT</version>
 	<packaging>jar</packaging>
 
-	<name>helloWorld</name>
-	<url>http://maven.apache.org</url>
+	<name>kindleTouchJenkinsMonitor</name>
+	<url>http://www.example.com</url>
 
+	<developers>
+		<developer>
+			<id>jhack</id>
+			<email>gboccard@gmail.com</email>
+			<url>Jhack.it</url>
+			<organization>Jhack S.p.A.</organization>
+			<organizationUrl>http://www.jhack.it</organizationUrl>
+			<timezone>+1</timezone>
+		</developer>
+	</developers>
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 	</properties>
@@ -184,4 +194,9 @@
 			</plugin>
 		</plugins>
 	</build>
+	<organization>
+		<name>Jhack S.p.A.</name>
+		<url>http://www.jhack.it</url>
+	</organization>
+	<description>A kindlet to monitor Jenkins</description>
 </project>

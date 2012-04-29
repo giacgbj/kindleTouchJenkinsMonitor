@@ -1,4 +1,4 @@
-package it.jhack.kindle.helloWorld;
+package it.jhack.kindle.kindleTouchJenkinsMonitor;
 
 public class TestMain {
 	

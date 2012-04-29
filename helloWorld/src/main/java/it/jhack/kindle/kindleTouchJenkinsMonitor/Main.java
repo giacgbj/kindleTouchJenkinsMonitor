@@ -1,4 +1,4 @@
-package it.jhack.kindle.helloWorld;
+package it.jhack.kindle.kindleTouchJenkinsMonitor;
 
 import javax.swing.JTable;
 import javax.swing.JTextArea;
