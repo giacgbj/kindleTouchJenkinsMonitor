@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<testsuite failures="0" time="0.003" errors="0" skipped="0" tests="0" name="it.jhack.kindle.kindleTouchJenkinsMonitor.TestMain">
+<testsuite failures="0" time="0.004" errors="0" skipped="0" tests="0" name="it.jhack.kindle.kindleTouchJenkinsMonitor.TestMain">
   <properties>
     <property name="java.runtime.name" value="Java(TM) SE Runtime Environment"/>
     <property name="sun.boot.library.path" value="/System/Library/Java/JavaVirtualMachines/1.6.0.jdk/Contents/Libraries"/>
@@ -16,13 +16,13 @@
     <property name="sun.java.launcher" value="SUN_STANDARD"/>
     <property name="sun.os.patch.level" value="unknown"/>
     <property name="java.vm.specification.name" value="Java Virtual Machine Specification"/>
-    <property name="user.dir" value="/Users/JhacK/git/jGit/kindleTouchJenkinsMonitor"/>
+    <property name="user.dir" value="/Users/JhacK/git/kindleTouchJenkinsMonitor"/>
     <property name="java.runtime.version" value="1.6.0_31-b04-415-10M3646"/>
     <property name="java.awt.graphicsenv" value="apple.awt.CGraphicsEnvironment"/>
-    <property name="basedir" value="/Users/JhacK/git/jGit/kindleTouchJenkinsMonitor"/>
+    <property name="basedir" value="/Users/JhacK/git/kindleTouchJenkinsMonitor"/>
     <property name="java.endorsed.dirs" value="/System/Library/Java/JavaVirtualMachines/1.6.0.jdk/Contents/Home/lib/endorsed"/>
     <property name="os.arch" value="i386"/>
-    <property name="surefire.real.class.path" value="/Users/JhacK/git/jGit/kindleTouchJenkinsMonitor/target/surefire/surefirebooter1006663840566220761.jar"/>
+    <property name="surefire.real.class.path" value="/Users/JhacK/git/kindleTouchJenkinsMonitor/target/surefire/surefirebooter3972038662508451105.jar"/>
     <property name="java.io.tmpdir" value="/var/folders/Eb/EbO16qG8E8y6dn7wf+42fk+++TI/-Tmp-/"/>
     <property name="line.separator" value="
 "/>
@@ -30,7 +30,7 @@
     <property name="os.name" value="Mac OS X"/>
     <property name="sun.jnu.encoding" value="MacRoman"/>
     <property name="java.library.path" value=".:/Library/Java/Extensions:/System/Library/Java/Extensions:/usr/lib/java"/>
-    <property name="surefire.test.class.path" value="/Users/JhacK/git/jGit/kindleTouchJenkinsMonitor/target/test-classes:/Users/JhacK/git/jGit/kindleTouchJenkinsMonitor/target/classes:/Users/JhacK/git/jGit/kindleTouchJenkinsMonitor/lib/Kindlet-2.1.jar:/Users/JhacK/git/jGit/kindleTouchJenkinsMonitor/lib/KindletImplementation-2.1.jar:/Users/JhacK/git/jGit/kindleTouchJenkinsMonitor/lib/KindleDeviceServicesAbstraction-2.1.jar:/Users/JhacK/git/jGit/kindleTouchJenkinsMonitor/lib/KindleDeviceServicesJuno-2.1.jar:/Users/JhacK/git/jGit/kindleTouchJenkinsMonitor/lib/KindletBookletDRM-2.1.jar:/Users/JhacK/git/jGit/kindleTouchJenkinsMonitor/lib/xercesImpl.jar:/Users/JhacK/git/jGit/kindleTouchJenkinsMonitor/lib/xml-apis.jar:/Users/JhacK/.m2/repository/junit/junit/3.8.1/junit-3.8.1.jar:"/>
+    <property name="surefire.test.class.path" value="/Users/JhacK/git/kindleTouchJenkinsMonitor/target/test-classes:/Users/JhacK/git/kindleTouchJenkinsMonitor/target/classes:/Users/JhacK/git/kindleTouchJenkinsMonitor/lib/Kindlet-2.1.jar:/Users/JhacK/git/kindleTouchJenkinsMonitor/lib/KindletImplementation-2.1.jar:/Users/JhacK/git/kindleTouchJenkinsMonitor/lib/KindleDeviceServicesAbstraction-2.1.jar:/Users/JhacK/git/kindleTouchJenkinsMonitor/lib/KindleDeviceServicesJuno-2.1.jar:/Users/JhacK/git/kindleTouchJenkinsMonitor/lib/KindletBookletDRM-2.1.jar:/Users/JhacK/git/kindleTouchJenkinsMonitor/lib/xercesImpl.jar:/Users/JhacK/git/kindleTouchJenkinsMonitor/lib/xml-apis.jar:/Users/JhacK/git/kindleTouchJenkinsMonitor/lib/log4j-1.2.16.jar:/Users/JhacK/.m2/repository/junit/junit/3.8.1/junit-3.8.1.jar:"/>
     <property name="java.specification.name" value="Java Platform API Specification"/>
     <property name="java.class.version" value="50.0"/>
     <property name="sun.management.compiler" value="HotSpot Client Compiler"/>
@@ -42,11 +42,11 @@
     <property name="java.specification.version" value="1.6"/>
     <property name="file.encoding" value="MacRoman"/>
     <property name="user.name" value="JhacK"/>
-    <property name="java.class.path" value="/Users/JhacK/git/jGit/kindleTouchJenkinsMonitor/target/test-classes:/Users/JhacK/git/jGit/kindleTouchJenkinsMonitor/target/classes:/Users/JhacK/git/jGit/kindleTouchJenkinsMonitor/lib/Kindlet-2.1.jar:/Users/JhacK/git/jGit/kindleTouchJenkinsMonitor/lib/KindletImplementation-2.1.jar:/Users/JhacK/git/jGit/kindleTouchJenkinsMonitor/lib/KindleDeviceServicesAbstraction-2.1.jar:/Users/JhacK/git/jGit/kindleTouchJenkinsMonitor/lib/KindleDeviceServicesJuno-2.1.jar:/Users/JhacK/git/jGit/kindleTouchJenkinsMonitor/lib/KindletBookletDRM-2.1.jar:/Users/JhacK/git/jGit/kindleTouchJenkinsMonitor/lib/xercesImpl.jar:/Users/JhacK/git/jGit/kindleTouchJenkinsMonitor/lib/xml-apis.jar:/Users/JhacK/.m2/repository/junit/junit/3.8.1/junit-3.8.1.jar:"/>
+    <property name="java.class.path" value="/Users/JhacK/git/kindleTouchJenkinsMonitor/target/test-classes:/Users/JhacK/git/kindleTouchJenkinsMonitor/target/classes:/Users/JhacK/git/kindleTouchJenkinsMonitor/lib/Kindlet-2.1.jar:/Users/JhacK/git/kindleTouchJenkinsMonitor/lib/KindletImplementation-2.1.jar:/Users/JhacK/git/kindleTouchJenkinsMonitor/lib/KindleDeviceServicesAbstraction-2.1.jar:/Users/JhacK/git/kindleTouchJenkinsMonitor/lib/KindleDeviceServicesJuno-2.1.jar:/Users/JhacK/git/kindleTouchJenkinsMonitor/lib/KindletBookletDRM-2.1.jar:/Users/JhacK/git/kindleTouchJenkinsMonitor/lib/xercesImpl.jar:/Users/JhacK/git/kindleTouchJenkinsMonitor/lib/xml-apis.jar:/Users/JhacK/git/kindleTouchJenkinsMonitor/lib/log4j-1.2.16.jar:/Users/JhacK/.m2/repository/junit/junit/3.8.1/junit-3.8.1.jar:"/>
     <property name="java.vm.specification.version" value="1.0"/>
     <property name="sun.arch.data.model" value="32"/>
     <property name="java.home" value="/System/Library/Java/JavaVirtualMachines/1.6.0.jdk/Contents/Home"/>
-    <property name="sun.java.command" value="/Users/JhacK/git/jGit/kindleTouchJenkinsMonitor/target/surefire/surefirebooter1006663840566220761.jar /Users/JhacK/git/jGit/kindleTouchJenkinsMonitor/target/surefire/surefire5984896438382439420tmp /Users/JhacK/git/jGit/kindleTouchJenkinsMonitor/target/surefire/surefire6070335435669494607tmp"/>
+    <property name="sun.java.command" value="/Users/JhacK/git/kindleTouchJenkinsMonitor/target/surefire/surefirebooter3972038662508451105.jar /Users/JhacK/git/kindleTouchJenkinsMonitor/target/surefire/surefire329779433889349250tmp /Users/JhacK/git/kindleTouchJenkinsMonitor/target/surefire/surefire3307778792570289116tmp"/>
     <property name="java.specification.vendor" value="Sun Microsystems Inc."/>
     <property name="user.language" value="en"/>
     <property name="awt.toolkit" value="apple.awt.CToolkit"/>

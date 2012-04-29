@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8" ?>
 <project name="maven-antrun-" default="main"  >
 <target name="main">
-  <move file="/Users/JhacK/git/jGit/kindleTouchJenkinsMonitor/target/kindleTouchJenkinsMonitor-0.0.1-SNAPSHOT.jar" tofile="/Users/JhacK/git/jGit/kindleTouchJenkinsMonitor/target/kindleTouchJenkinsMonitor-0.0.1-SNAPSHOT.azw2"/>
-  <copy todir="/Users/JhacK/Desktop/kindleSSHFS/mnt/us/documents/" file="/Users/JhacK/git/jGit/kindleTouchJenkinsMonitor/target/kindleTouchJenkinsMonitor-0.0.1-SNAPSHOT.azw2"/>
+  <move file="/Users/JhacK/git/kindleTouchJenkinsMonitor/target/kindleTouchJenkinsMonitor-0.0.1-SNAPSHOT.jar" tofile="/Users/JhacK/git/kindleTouchJenkinsMonitor/target/kindleTouchJenkinsMonitor-0.0.1-SNAPSHOT.azw2"/>
+  <copy todir="/Users/JhacK/Desktop/kindleSSHFS/mnt/us/documents/" file="/Users/JhacK/git/kindleTouchJenkinsMonitor/target/kindleTouchJenkinsMonitor-0.0.1-SNAPSHOT.azw2"/>
 </target>
 </project>

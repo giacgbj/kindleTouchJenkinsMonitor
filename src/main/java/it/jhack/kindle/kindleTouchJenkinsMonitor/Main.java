@@ -1,6 +1,12 @@
 package it.jhack.kindle.kindleTouchJenkinsMonitor;
 
 import java.awt.Container;
+import java.awt.EventQueue;
+import java.io.BufferedReader;
+import java.io.InputStreamReader;
+import java.io.Reader;
+import java.io.StringReader;
+import java.net.URL;
 
 import javax.swing.JTable;
 import javax.swing.JTextArea;
@@ -12,64 +18,125 @@ import org.w3c.dom.Document;
 import org.w3c.dom.NamedNodeMap;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
+import org.xml.sax.InputSource;
 
 import com.amazon.kindle.kindlet.AbstractKindlet;
 import com.amazon.kindle.kindlet.KindletContext;
 
 public class Main extends AbstractKindlet {
+	private static boolean stopped = false;
+	private boolean isFirstStart = true;
+	// private static long startTime = System.currentTimeMillis();
+	private static Logger L = Logger.getLogger(Main.class);
+	
+	private static String JENKINS_CC_XML_URL = "http://codebuilder.unimatica.lan:8080/cc.xml";
 	
 	private KindletContext ctx;
-	
 	String xmlFallback = "<Projects>"
-			+ "<Project webUrl=\"http://codebuilder.unimatica.lan:8080/job/Almawelcome/\" name=\"Almawelcome\" lastBuildLabel=\"27\" lastBuildTime=\"2012-04-29T05:01:12Z\" lastBuildStatus=\"Success\" activity=\"Sleeping\"/>"
-			+ "<Project webUrl=\"http://codebuilder.unimatica.lan:8080/job/Fat/\" name=\"Fat\" lastBuildLabel=\"127\" lastBuildTime=\"2012-04-29T14:16:12Z\" lastBuildStatus=\"Success\" activity=\"Sleeping\"/>"
-			+ "<Project webUrl=\"http://codebuilder.unimatica.lan:8080/job/Ordcons/\" name=\"Ordcons\" lastBuildLabel=\"61\" lastBuildTime=\"2012-04-29T14:01:12Z\" lastBuildStatus=\"Success\" activity=\"Sleeping\"/>"
-			+ "<Project webUrl=\"http://codebuilder.unimatica.lan:8080/job/Ordscuole/\" name=\"Ordscuole\" lastBuildLabel=\"71\" lastBuildTime=\"2012-04-29T14:16:12Z\" lastBuildStatus=\"Success\" activity=\"Sleeping\"/>"
-			+ "<Project webUrl=\"http://codebuilder.unimatica.lan:8080/job/Pagamenti/\" name=\"Pagamenti\" lastBuildLabel=\"120\" lastBuildTime=\"2012-04-29T14:16:12Z\" lastBuildStatus=\"Success\" activity=\"Sleeping\"/>"
-			+ "<Project webUrl=\"http://codebuilder.unimatica.lan:8080/job/Prova/\" name=\"Prova\" lastBuildLabel=\"8\" lastBuildTime=\"2012-04-29T05:01:12Z\" lastBuildStatus=\"Success\" activity=\"Sleeping\"/>"
-			+ "<Project webUrl=\"http://codebuilder.unimatica.lan:8080/job/Uniboard/\" name=\"Uniboard\" lastBuildLabel=\"126\" lastBuildTime=\"2012-04-29T14:21:12Z\" lastBuildStatus=\"Success\" activity=\"Sleeping\"/>"
-			+ "<Project webUrl=\"http://codebuilder.unimatica.lan:8080/job/Uniboard-JBond/\" name=\"Uniboard-JBond\" lastBuildLabel=\"126\" lastBuildTime=\"2012-04-29T14:23:10Z\" lastBuildStatus=\"Success\" activity=\"Sleeping\"/>"
-			+ "<Project webUrl=\"http://codebuilder.unimatica.lan:8080/job/Unilet/\" name=\"Unilet\" lastBuildLabel=\"91\" lastBuildTime=\"2012-04-29T14:23:58Z\" lastBuildStatus=\"Failure\" activity=\"Sleeping\"/>"
-			+ "<Project webUrl=\"http://codebuilder.unimatica.lan:8080/job/UnimCA/\" name=\"UnimCA\" lastBuildLabel=\"55\" lastBuildTime=\"2012-04-29T14:24:50Z\" lastBuildStatus=\"Success\" activity=\"Sleeping\"/>"
-			+ "<Project webUrl=\"http://codebuilder.unimatica.lan:8080/job/Unimoney/\" name=\"Unimoney\" lastBuildLabel=\"121\" lastBuildTime=\"2012-04-29T14:25:09Z\" lastBuildStatus=\"Success\" activity=\"Sleeping\"/>"
-			+ "<Project webUrl=\"http://codebuilder.unimatica.lan:8080/job/Unimoney-Branch/\" name=\"Unimoney-Branch\" lastBuildLabel=\"47\" lastBuildTime=\"2012-04-29T14:27:57Z\" lastBuildStatus=\"Success\" activity=\"Sleeping\"/>"
-			+ "<Project webUrl=\"http://codebuilder.unimatica.lan:8080/job/Unirepo/\" name=\"Unirepo\" lastBuildLabel=\"117\" lastBuildTime=\"2012-04-29T14:30:45Z\" lastBuildStatus=\"Success\" activity=\"Sleeping\"/>"
-			+ "<Project webUrl=\"http://codebuilder.unimatica.lan:8080/job/Unirepo-Matrix/\" name=\"Unirepo-Matrix\" lastBuildLabel=\"38\" lastBuildTime=\"2012-04-29T12:16:12Z\" lastBuildStatus=\"Success\" activity=\"Sleeping\"/>"
-			+ "<Project webUrl=\"http://codebuilder.unimatica.lan:8080/job/Uniserv/\" name=\"Uniserv\" lastBuildLabel=\"125\" lastBuildTime=\"2012-04-29T14:33:23Z\" lastBuildStatus=\"Success\" activity=\"Sleeping\"/>"
-			+ "<Project webUrl=\"http://codebuilder.unimatica.lan:8080/job/Uniwex/\" name=\"Uniwex\" lastBuildLabel=\"72\" lastBuildTime=\"2012-04-29T14:36:25Z\" lastBuildStatus=\"Success\" activity=\"Sleeping\"/>"
+			+ "<Project webUrl=\"http://codebuilder.unimatica.lan:8080/job/jAlmawelcome/\" name=\"jAlmawelcome\" lastBuildLabel=\"27\" lastBuildTime=\"2012-04-29T05:01:12Z\" lastBuildStatus=\"Success\" activity=\"Sleeping\"/>"
+			+ "<Project webUrl=\"http://codebuilder.unimatica.lan:8080/job/jFat/\" name=\"jFat\" lastBuildLabel=\"127\" lastBuildTime=\"2012-04-29T14:16:12Z\" lastBuildStatus=\"Success\" activity=\"Sleeping\"/>"
+			+ "<Project webUrl=\"http://codebuilder.unimatica.lan:8080/job/jOrdcons/\" name=\"jOrdcons\" lastBuildLabel=\"61\" lastBuildTime=\"2012-04-29T14:01:12Z\" lastBuildStatus=\"Success\" activity=\"Sleeping\"/>"
+			+ "<Project webUrl=\"http://codebuilder.unimatica.lan:8080/job/jOrdscuole/\" name=\"jOrdscuole\" lastBuildLabel=\"71\" lastBuildTime=\"2012-04-29T14:16:12Z\" lastBuildStatus=\"Success\" activity=\"Sleeping\"/>"
+			+ "<Project webUrl=\"http://codebuilder.unimatica.lan:8080/job/jPagamenti/\" name=\"jPagamenti\" lastBuildLabel=\"120\" lastBuildTime=\"2012-04-29T14:16:12Z\" lastBuildStatus=\"Success\" activity=\"Sleeping\"/>"
+			+ "<Project webUrl=\"http://codebuilder.unimatica.lan:8080/job/jProva/\" name=\"jProva\" lastBuildLabel=\"8\" lastBuildTime=\"2012-04-29T05:01:12Z\" lastBuildStatus=\"Success\" activity=\"Sleeping\"/>"
+			+ "<Project webUrl=\"http://codebuilder.unimatica.lan:8080/job/jUniboard/\" name=\"jUniboard\" lastBuildLabel=\"126\" lastBuildTime=\"2012-04-29T14:21:12Z\" lastBuildStatus=\"Success\" activity=\"Sleeping\"/>"
+			+ "<Project webUrl=\"http://codebuilder.unimatica.lan:8080/job/jUniboard-JBond/\" name=\"jUniboard-JBond\" lastBuildLabel=\"126\" lastBuildTime=\"2012-04-29T14:23:10Z\" lastBuildStatus=\"Success\" activity=\"Sleeping\"/>"
+			+ "<Project webUrl=\"http://codebuilder.unimatica.lan:8080/job/jUnilet/\" name=\"jUnilet\" lastBuildLabel=\"91\" lastBuildTime=\"2012-04-29T14:23:58Z\" lastBuildStatus=\"Failure\" activity=\"Sleeping\"/>"
+			+ "<Project webUrl=\"http://codebuilder.unimatica.lan:8080/job/jUnimCA/\" name=\"jUnimCA\" lastBuildLabel=\"55\" lastBuildTime=\"2012-04-29T14:24:50Z\" lastBuildStatus=\"Success\" activity=\"Sleeping\"/>"
+			+ "<Project webUrl=\"http://codebuilder.unimatica.lan:8080/job/jUnimoney/\" name=\"jUnimoney\" lastBuildLabel=\"121\" lastBuildTime=\"2012-04-29T14:25:09Z\" lastBuildStatus=\"Success\" activity=\"Sleeping\"/>"
+			+ "<Project webUrl=\"http://codebuilder.unimatica.lan:8080/job/jUnimoney-Branch/\" name=\"jUnimoney-Branch\" lastBuildLabel=\"47\" lastBuildTime=\"2012-04-29T14:27:57Z\" lastBuildStatus=\"Success\" activity=\"Sleeping\"/>"
+			+ "<Project webUrl=\"http://codebuilder.unimatica.lan:8080/job/jUnirepo/\" name=\"jUnirepo\" lastBuildLabel=\"117\" lastBuildTime=\"2012-04-29T14:30:45Z\" lastBuildStatus=\"Success\" activity=\"Sleeping\"/>"
+			+ "<Project webUrl=\"http://codebuilder.unimatica.lan:8080/job/jUnirepo-Matrix/\" name=\"jUnirepo-Matrix\" lastBuildLabel=\"38\" lastBuildTime=\"2012-04-29T12:16:12Z\" lastBuildStatus=\"Success\" activity=\"Sleeping\"/>"
+			+ "<Project webUrl=\"http://codebuilder.unimatica.lan:8080/job/jUniserv/\" name=\"jUniserv\" lastBuildLabel=\"125\" lastBuildTime=\"2012-04-29T14:33:23Z\" lastBuildStatus=\"Success\" activity=\"Sleeping\"/>"
+			+ "<Project webUrl=\"http://codebuilder.unimatica.lan:8080/job/jUniwex/\" name=\"jUniwex\" lastBuildLabel=\"72\" lastBuildTime=\"2012-04-29T14:36:25Z\" lastBuildStatus=\"Success\" activity=\"Sleeping\"/>"
 			+ "</Projects>";
 	
-	private static long startTime = System.currentTimeMillis();
-	private static Logger logger = Logger.getLogger("J");
-	Container rootContainer;
-	
-	public static void logit(final String msg) {
-		final double timestamp = (System.currentTimeMillis() - Main.startTime) / 1000.0;
-		logger.info("[" + timestamp + " - " + Thread.currentThread().getName() + "]   " + msg);
+	public static boolean isStopped() {
+		return Main.stopped;
 	}
 	
+	public static void setStopped(final boolean isStopped) {
+		Main.stopped = isStopped;
+	}
+	
+	public static void timeLog(final String msg) {
+		// double timestamp = timestamp = (System.currentTimeMillis() -
+		// Main.startTime) / 1000.0;
+		// L.info("JJJ [" + timestamp + "]   " + msg);
+		// L.info("JJJ " + msg);
+	}
+	
+	Container rootContainer;
+	
+	@Override
 	public void create(final KindletContext context) {
-		logit("JJJ - create");
+		timeLog("JJJ <CREATE>");
 		
 		this.ctx = context;
 		this.rootContainer = this.ctx.getRootContainer();
 		
-		logit("JJJ - create done");
+		timeLog("JJJ </CREATE>");
 	}
 	
+	@Override
 	public void start() {
-		logit("JJJ - start");
+		timeLog("JJJ <START>");
 		
+		synchronized (this) {
+			timeLog("JJJ <START_SYNC>");
+			
+			Main.setStopped(false);
+			super.start();
+			
+			if (this.isFirstStart) {
+				
+				timeLog("JJJ <START_INITIAL>");
+				
+				if (!Main.isStopped()) {
+					
+					final Runnable runnable = new Runnable() {
+						public void run() {
+							Main.this.initialStart();
+						}
+					};
+					timeLog("JJJ <START_RUNNABLE>");
+					EventQueue.invokeLater(runnable);
+				}
+			} else {
+				// Ad esempio, dopo screensaver
+				timeLog("JJJ <START_AFTER_PAUSE>");
+				
+				// Se cose fatte nello stop fanno danni
+				
+			}
+			
+		}
+		
+		timeLog("JJJ </START*>");
+	}
+	
+	private void initialStart() {
 		this.ctx.setSubTitle("Sponsored by Jhack");
 		
 		createMenu();
 		
 		final DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
 		DocumentBuilder db;
+		
+		Reader reader;
+		try {
+			final URL url = new URL("http://code.praqma.net/ci/cc.xml2");
+			
+			reader = new BufferedReader(new InputStreamReader(url.openStream()));
+			
+		} catch (final Exception e) {
+			reader = new StringReader(this.xmlFallback);
+		}
+		
 		try {
 			db = factory.newDocumentBuilder();
-			final org.xml.sax.InputSource inStream = new org.xml.sax.InputSource();
-			inStream.setCharacterStream(new java.io.StringReader(this.xmlFallback));
+			final InputSource inStream = new InputSource();
+			inStream.setCharacterStream(reader);
 			final Document doc = db.parse(inStream);
 			final NodeList projects = doc.getElementsByTagName("Project");
 			processProjects(projects);
@@ -79,6 +146,34 @@ public class Main extends AbstractKindlet {
 			this.ctx.getRootContainer().add(new JTextArea(log));
 		}
 		
+		this.isFirstStart = false;
+		
+	}
+	
+	@Override
+	public void stop() {
+		timeLog("JJJ <STOP>");
+		
+		Main.setStopped(true);
+		
+		synchronized (this) {
+			timeLog("JJJ <STOP_SYNC>");
+			
+			// ...
+		}
+		
+		timeLog("JJJ </STOP>");
+	}
+	
+	@Override
+	public void destroy() {
+		timeLog("JJJ </DESTROY>");
+		
+		this.rootContainer.setLayout(null);
+		this.rootContainer.removeAll();
+		System.gc();
+		
+		timeLog("JJJ </DESTROY>");
 	}
 	
 	private void createMenu() {
@@ -139,4 +234,5 @@ public class Main extends AbstractKindlet {
 		// + activity));
 		
 	}
+	
 }
