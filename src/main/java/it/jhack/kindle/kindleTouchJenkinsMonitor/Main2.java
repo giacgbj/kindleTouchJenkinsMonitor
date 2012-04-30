@@ -2,10 +2,8 @@ package it.jhack.kindle.kindleTouchJenkinsMonitor;
 
 import java.awt.Container;
 import java.awt.EventQueue;
-import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.io.Reader;
 import java.io.StringReader;
 import java.net.SocketTimeoutException;
@@ -26,17 +24,20 @@ import org.xml.sax.InputSource;
 
 import com.amazon.kindle.kindlet.AbstractKindlet;
 import com.amazon.kindle.kindlet.KindletContext;
+import com.amazon.kindle.kindlet.net.ConnectivityHandler;
+import com.amazon.kindle.kindlet.net.NetworkDisabledDetails;
 
-public class Main extends AbstractKindlet {
+public class Main2 extends AbstractKindlet {
 	private static boolean stopped = false;
-	private boolean isFirstStart = true;
+	private static boolean isFirstStart = true;
 	// private static long startTime = System.currentTimeMillis();
-	private static Logger L = Logger.getLogger(Main.class);
+	private static Logger L = Logger.getLogger(Main2.class);
 	
-	static String JENKINS_CC_XML_URL = "http://codebuilder.unimatica.lan:8080/cc.xml";
+	Container rootContainer;
+	private static String JENKINS_CC_XML_URL = "http://codebuilder.unimatica.lan:8080/cc.xml";
 	
-	private KindletContext ctx;
-	String xmlFallback = "<Projects>"
+	private static KindletContext ctx;
+	final static String xmlFallback = "<Projects>"
 			+ "<Project webUrl=\"http://codebuilder.unimatica.lan:8080/job/jAlmawelcome/\" name=\"jAlmawelcome\" lastBuildLabel=\"27\" lastBuildTime=\"2012-04-29T05:01:12Z\" lastBuildStatus=\"Success\" activity=\"Sleeping\"/>"
 			+ "<Project webUrl=\"http://codebuilder.unimatica.lan:8080/job/jFat/\" name=\"jFat\" lastBuildLabel=\"127\" lastBuildTime=\"2012-04-29T14:16:12Z\" lastBuildStatus=\"Success\" activity=\"Sleeping\"/>"
 			+ "<Project webUrl=\"http://codebuilder.unimatica.lan:8080/job/jOrdcons/\" name=\"jOrdcons\" lastBuildLabel=\"61\" lastBuildTime=\"2012-04-29T14:01:12Z\" lastBuildStatus=\"Success\" activity=\"Sleeping\"/>"
@@ -55,22 +56,47 @@ public class Main extends AbstractKindlet {
 			+ "<Project webUrl=\"http://codebuilder.unimatica.lan:8080/job/jUniwex/\" name=\"jUniwex\" lastBuildLabel=\"72\" lastBuildTime=\"2012-04-29T14:36:25Z\" lastBuildStatus=\"Success\" activity=\"Sleeping\"/>"
 			+ "</Projects>";
 	
+	final static String xmlFallback2 = "<Projects>"
+			+ "<Project webUrl=\"http://codebuilder.unimatica.lan:8080/job/jAlmawelcome/\" name=\"kAlmawelcome\" lastBuildLabel=\"27\" lastBuildTime=\"2012-04-29T05:01:12Z\" lastBuildStatus=\"Success\" activity=\"Sleeping\"/>"
+			+ "<Project webUrl=\"http://codebuilder.unimatica.lan:8080/job/jFat/\" name=\"kFat\" lastBuildLabel=\"127\" lastBuildTime=\"2012-04-29T14:16:12Z\" lastBuildStatus=\"Success\" activity=\"Sleeping\"/>"
+			+ "<Project webUrl=\"http://codebuilder.unimatica.lan:8080/job/jOrdcons/\" name=\"kOrdcons\" lastBuildLabel=\"61\" lastBuildTime=\"2012-04-29T14:01:12Z\" lastBuildStatus=\"Success\" activity=\"Sleeping\"/>"
+			+ "<Project webUrl=\"http://codebuilder.unimatica.lan:8080/job/jOrdscuole/\" name=\"kOrdscuole\" lastBuildLabel=\"71\" lastBuildTime=\"2012-04-29T14:16:12Z\" lastBuildStatus=\"Success\" activity=\"Sleeping\"/>"
+			+ "<Project webUrl=\"http://codebuilder.unimatica.lan:8080/job/jPagamenti/\" name=\"kPagamenti\" lastBuildLabel=\"120\" lastBuildTime=\"2012-04-29T14:16:12Z\" lastBuildStatus=\"Success\" activity=\"Sleeping\"/>"
+			+ "<Project webUrl=\"http://codebuilder.unimatica.lan:8080/job/jProva/\" name=\"kProva\" lastBuildLabel=\"8\" lastBuildTime=\"2012-04-29T05:01:12Z\" lastBuildStatus=\"Success\" activity=\"Sleeping\"/>"
+			+ "<Project webUrl=\"http://codebuilder.unimatica.lan:8080/job/jUniboard/\" name=\"kUniboard\" lastBuildLabel=\"126\" lastBuildTime=\"2012-04-29T14:21:12Z\" lastBuildStatus=\"Success\" activity=\"Sleeping\"/>"
+			+ "<Project webUrl=\"http://codebuilder.unimatica.lan:8080/job/jUniboard-JBond/\" name=\"kUniboard-JBond\" lastBuildLabel=\"126\" lastBuildTime=\"2012-04-29T14:23:10Z\" lastBuildStatus=\"Success\" activity=\"Sleeping\"/>"
+			+ "<Project webUrl=\"http://codebuilder.unimatica.lan:8080/job/jUnilet/\" name=\"kUnilet\" lastBuildLabel=\"91\" lastBuildTime=\"2012-04-29T14:23:58Z\" lastBuildStatus=\"Failure\" activity=\"Sleeping\"/>"
+			+ "<Project webUrl=\"http://codebuilder.unimatica.lan:8080/job/jUnimCA/\" name=\"kUnimCA\" lastBuildLabel=\"55\" lastBuildTime=\"2012-04-29T14:24:50Z\" lastBuildStatus=\"Success\" activity=\"Sleeping\"/>"
+			+ "<Project webUrl=\"http://codebuilder.unimatica.lan:8080/job/jUnimoney/\" name=\"kUnimoney\" lastBuildLabel=\"121\" lastBuildTime=\"2012-04-29T14:25:09Z\" lastBuildStatus=\"Success\" activity=\"Sleeping\"/>"
+			+ "<Project webUrl=\"http://codebuilder.unimatica.lan:8080/job/jUnimoney-Branch/\" name=\"kUnimoney-Branch\" lastBuildLabel=\"47\" lastBuildTime=\"2012-04-29T14:27:57Z\" lastBuildStatus=\"Success\" activity=\"Sleeping\"/>"
+			+ "<Project webUrl=\"http://codebuilder.unimatica.lan:8080/job/jUnirepo/\" name=\"kUnirepo\" lastBuildLabel=\"117\" lastBuildTime=\"2012-04-29T14:30:45Z\" lastBuildStatus=\"Success\" activity=\"Sleeping\"/>"
+			+ "<Project webUrl=\"http://codebuilder.unimatica.lan:8080/job/jUnirepo-Matrix/\" name=\"kUnirepo-Matrix\" lastBuildLabel=\"38\" lastBuildTime=\"2012-04-29T12:16:12Z\" lastBuildStatus=\"Success\" activity=\"Sleeping\"/>"
+			+ "<Project webUrl=\"http://codebuilder.unimatica.lan:8080/job/jUniserv/\" name=\"kUniserv\" lastBuildLabel=\"125\" lastBuildTime=\"2012-04-29T14:33:23Z\" lastBuildStatus=\"Success\" activity=\"Sleeping\"/>"
+			+ "<Project webUrl=\"http://codebuilder.unimatica.lan:8080/job/jUniwex/\" name=\"kUniwex\" lastBuildLabel=\"72\" lastBuildTime=\"2012-04-29T14:36:25Z\" lastBuildStatus=\"Success\" activity=\"Sleeping\"/>"
+			+ "</Projects>";
+	
 	public static boolean isStopped() {
-		return Main.stopped;
+		return Main2.stopped;
 	}
 	
 	public static void setStopped(final boolean isStopped) {
-		Main.stopped = isStopped;
+		Main2.stopped = isStopped;
+	}
+	
+	public static boolean isFirstStart() {
+		return Main2.isFirstStart;
+	}
+	
+	public static void setFirstStart(final boolean isFirstStart) {
+		Main2.isFirstStart = isFirstStart;
 	}
 	
 	public static void timeLog(final String msg) {
 		// double timestamp = timestamp = (System.currentTimeMillis() -
-		// Main.startTime) / 1000.0;
+		// Main2.startTime) / 1000.0;
 		// L.info("JJJ [" + timestamp + "]   " + msg);
 		// L.info("JJJ " + msg);
 	}
-	
-	Container rootContainer;
 	
 	@Override
 	public void create(final KindletContext context) {
@@ -89,18 +115,18 @@ public class Main extends AbstractKindlet {
 		synchronized (this) {
 			timeLog("JJJ <START_SYNC>");
 			
-			Main.setStopped(false);
+			Main2.setStopped(false);
 			super.start();
 			
-			if (this.isFirstStart) {
+			if (Main2.isFirstStart()) {
 				
 				timeLog("JJJ <START_INITIAL>");
 				
-				if (!Main.isStopped()) {
+				if (!Main2.isStopped()) {
 					
 					final Runnable runnable = new Runnable() {
 						public void run() {
-							Main.this.initialStart();
+							Main2.this.initialStart();
 						}
 					};
 					timeLog("JJJ <START_RUNNABLE>");
@@ -119,15 +145,13 @@ public class Main extends AbstractKindlet {
 		timeLog("JJJ </START*>");
 	}
 	
-	static InputStream getUrlInputStream(final String urlStr) throws IOException, SocketTimeoutException {
+	private InputStream getUrlInputStream(final String urlStr) throws IOException, SocketTimeoutException {
 		final URL url = new URL(urlStr);
 		// return url.openStream();
 		
 		final URLConnection con = url.openConnection();
-		// Bloccano l'esecuzione per sempre...?!
-		// con.setConnectTimeout(10000);
-		// con.setReadTimeout(15000);
-		
+		con.setConnectTimeout(1000);
+		con.setReadTimeout(5000);
 		final InputStream in = con.getInputStream();
 		return in;
 	}
@@ -137,45 +161,53 @@ public class Main extends AbstractKindlet {
 		
 		createMenu();
 		
-		final DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
-		DocumentBuilder db;
-		
-		Reader reader;
-		// Provo prima url rete interna, poi esterna, poi dummy
-		try {
-			reader = new BufferedReader(new InputStreamReader(getUrlInputStream(JENKINS_CC_XML_URL)));
-		} catch (final Exception e) {
-			try {
-				reader = new BufferedReader(
-						new InputStreamReader(getUrlInputStream("http://code.praqma.net/ci/cc.xml")));
-			} catch (final Exception g) {
+		final ConnectivityHandler handler = new ConnectivityHandler() {
+			public void connected() {
+				
+				final DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
+				DocumentBuilder db;
+				// Provo prima url rete interna, poi esterna, poi dummy
+				Reader reader;
+				// try {
+				// reader = new BufferedReader(new
+				// InputStreamReader(getUrlInputStream(JENKINS_CC_XML_URL)));
+				// } catch (final Exception e) {
+				// try {
+				// reader = new BufferedReader(new InputStreamReader(
+				// getUrlInputStream("http://code.praqma.net/ci/cc.xml")));
+				// } catch (final Exception g) {
 				reader = new StringReader(Main2.xmlFallback);
+				// }
+				// }
+				
+				try {
+					db = factory.newDocumentBuilder();
+					final InputSource inStream = new InputSource();
+					inStream.setCharacterStream(reader);
+					final Document doc = db.parse(inStream);
+					final NodeList projects = doc.getElementsByTagName("Project");
+					processProjects(projects);
+				} catch (final Exception e) {
+					e.printStackTrace();
+					final String log = "Message " + e.getMessage() + ", cause " + e.getCause();
+					Main2.ctx.getRootContainer().add(new JTextArea(log));
+				}
+				
+				Main2.setFirstStart(false);
 			}
-		}
-		
-		try {
-			db = factory.newDocumentBuilder();
-			final InputSource inStream = new InputSource();
-			inStream.setCharacterStream(reader);
-			final Document doc = db.parse(inStream);
-			reader.close();
-			final NodeList projects = doc.getElementsByTagName("Project");
-			processProjects(projects);
-		} catch (final Exception e) {
-			e.printStackTrace();
-			final String log = "Message " + e.getMessage() + ", cause " + e.getCause();
-			this.ctx.getRootContainer().add(new JTextArea(log));
-		}
-		
-		this.isFirstStart = false;
-		
+			
+			public void disabled(final NetworkDisabledDetails details) {
+				// NOP
+			}
+		};
+		this.ctx.getConnectivity().submitSingleAttemptConnectivityRequest(handler, true);
 	}
 	
 	@Override
 	public void stop() {
 		timeLog("JJJ <STOP>");
 		
-		Main.setStopped(true);
+		Main2.setStopped(true);
 		
 		synchronized (this) {
 			timeLog("JJJ <STOP_SYNC>");
@@ -248,6 +280,8 @@ public class Main extends AbstractKindlet {
 		
 		// this.rootContainer.setLayout(new BorderLayout());
 		this.rootContainer.add(table);
+		
+		this.rootContainer.requestFocus();
 		
 		// this.ctx.getRootContainer().add(
 		// new JTextArea(name + " " + lastBuildLabel + " " + lastBuildTime + " "
