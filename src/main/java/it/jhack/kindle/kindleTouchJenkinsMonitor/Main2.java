@@ -98,7 +98,6 @@ public class Main2 extends AbstractKindlet {
 		// L.info("JJJ " + msg);
 	}
 	
-	@Override
 	public void create(final KindletContext context) {
 		timeLog("JJJ <CREATE>");
 		
@@ -108,7 +107,6 @@ public class Main2 extends AbstractKindlet {
 		timeLog("JJJ </CREATE>");
 	}
 	
-	@Override
 	public void start() {
 		timeLog("JJJ <START>");
 		
@@ -203,7 +201,6 @@ public class Main2 extends AbstractKindlet {
 		this.ctx.getConnectivity().submitSingleAttemptConnectivityRequest(handler, true);
 	}
 	
-	@Override
 	public void stop() {
 		timeLog("JJJ <STOP>");
 		
@@ -218,7 +215,6 @@ public class Main2 extends AbstractKindlet {
 		timeLog("JJJ </STOP>");
 	}
 	
-	@Override
 	public void destroy() {
 		timeLog("JJJ </DESTROY>");
 		
