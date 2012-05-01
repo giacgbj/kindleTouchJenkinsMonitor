@@ -152,10 +152,6 @@ public class Main extends AbstractKindlet {
 	}
 	
 	protected void infinite() {
-		Format formatter;
-		formatter = new SimpleDateFormat("HH:mm:ss");
-		final String time = formatter.format(new Date());
-		this.ctx.setSubTitle("Update: " + time + " - by Jhack ©");
 		
 		if (true) {
 			final DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
@@ -178,8 +174,13 @@ public class Main extends AbstractKindlet {
 				final File ccFP = new File("/mnt/us/cc/", "cc-p.xml");
 				
 				try {
+					Format formatter;
+					formatter = new SimpleDateFormat("HH:mm:ss");
+					String time;
 					if ((ccFJ.exists() && (ccFJ.length() > 0)) || (ccFP.exists() && (ccFP.length() > 0))) {
 						final File theChosenOne = (ccFJ.exists() && (ccFJ.length() > 0)) ? ccFJ : ccFP;
+						time = formatter.format(new Date(theChosenOne.lastModified()));
+						
 						try {
 							final FileReader fR = new FileReader(theChosenOne);
 							Main.this.reader = fR;
@@ -187,10 +188,14 @@ public class Main extends AbstractKindlet {
 							Main.this.jTA.append("File [" + theChosenOne.getAbsolutePath()
 									+ "] non trovato. Eccezione: " + StackTrace.get(e));
 							Main.this.reader = new StringReader(Main.xmlFallback);
+							time = formatter.format(new Date());
 						}
 					} else {
 						Main.this.reader = new StringReader(Main.xmlFallback);
+						time = formatter.format(new Date());
 					}
+					
+					this.ctx.setSubTitle("Update < " + time + " >, by Jhack");
 				} catch (final Throwable e) {
 					Main.this.jTA.append("exception: " + StackTrace.get(e));
 				}
@@ -231,8 +236,8 @@ public class Main extends AbstractKindlet {
 					this.jTA.append("Method failed: " + get.getStatusLine());
 				}
 				
+				this.jTA.append("PRIMA");
 				rd = null;
-				// this.jTA.append("PRIMA");
 				//
 				// final InputStream responseIS = get.getResponseBodyAsStream();
 				//
@@ -362,6 +367,26 @@ public class Main extends AbstractKindlet {
 		
 		final String[] columnNamesArr = { "Name", "Build #", "Build Time", "Build Status", "Activity" };
 		final JTable table = new JTable(rowDataArr, columnNamesArr);
+		// final TableColumnModel tCM = table.getColumnModel();
+		// tCM.getColumn(0).setWidth(30);
+		// tCM.getColumn(1).setWidth(10);
+		// tCM.getColumn(2).setWidth(20);
+		// tCM.getColumn(3).setWidth(20);
+		// tCM.getColumn(4).setWidth(20);
+		
+		// final DefaultTableCellRenderer rightRenderer = new
+		// DefaultTableCellRenderer();
+		// rightRenderer.setHorizontalAlignment(JLabel.RIGHT);
+		// final DefaultTableCellRenderer centerRenderer = new
+		// DefaultTableCellRenderer();
+		// rightRenderer.setHorizontalAlignment(JLabel.CENTER);
+		
+		// tCM.getColumn(0).setCellRenderer(rightRenderer);
+		// tCM.getColumn(1).setCellRenderer(centerRenderer);
+		// tCM.getColumn(2).setCellRenderer(centerRenderer);
+		// tCM.getColumn(3).setCellRenderer(centerRenderer);
+		// tCM.getColumn(4).setCellRenderer(centerRenderer);
+		
 		// ColumnsAutoSizer.sizeColumnsToFit(table);
 		// table.getModel().addTableModelListener(new TableModelListener() {
 		//
