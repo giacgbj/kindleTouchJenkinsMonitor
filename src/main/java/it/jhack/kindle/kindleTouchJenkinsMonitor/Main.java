@@ -9,10 +9,15 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.io.Reader;
 import java.io.StringReader;
+import java.text.Format;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 
 import javax.swing.JScrollPane;
 import javax.swing.JTable;
 import javax.swing.JTextArea;
+import javax.swing.SwingUtilities;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 
@@ -122,9 +127,87 @@ public class Main extends AbstractKindlet {
 				
 			}
 			
+			if (true) {
+				Main.this.infinite();
+				
+			} else {
+				final Runnable infinite = new Runnable() {
+					public void run() {
+						while (true) {
+							Main.this.infinite();
+							try {
+								Thread.sleep(30000);
+							} catch (final Throwable e) {
+								Thread.currentThread().interrupt();
+							}
+						}
+						
+					}
+				};
+				SwingUtilities.invokeLater(infinite);
+			}
 		}
 		
 		timeLog("JJJ </START*>");
+	}
+	
+	protected void infinite() {
+		Format formatter;
+		formatter = new SimpleDateFormat("HH:mm:ss");
+		final String time = formatter.format(new Date());
+		this.ctx.setSubTitle("Update: " + time + " - by Jhack ©");
+		
+		if (true) {
+			final DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
+			final DocumentBuilder db;
+			
+			if (false) {
+				try {
+					Main.this.reader = getBufferedReader(JENKINS_CC_XML_URL);
+				} catch (final Throwable e) {
+					Main.this.jTA.append("exception: " + StackTrace.get(e));
+					try {
+						Main.this.reader = getBufferedReader("http://code.praqma.net/ci/cc.xml");
+					} catch (final Throwable f) {
+						Main.this.jTA.append("exception: " + StackTrace.get(e));
+						Main.this.reader = new StringReader(Main.xmlFallback);
+					}
+				}
+			} else {
+				final File ccFJ = new File("/mnt/us/cc/", "cc-j.xml");
+				final File ccFP = new File("/mnt/us/cc/", "cc-p.xml");
+				
+				try {
+					if ((ccFJ.exists() && (ccFJ.length() > 0)) || (ccFP.exists() && (ccFP.length() > 0))) {
+						final File theChosenOne = (ccFJ.exists() && (ccFJ.length() > 0)) ? ccFJ : ccFP;
+						try {
+							final FileReader fR = new FileReader(theChosenOne);
+							Main.this.reader = fR;
+						} catch (final Throwable e) {
+							Main.this.jTA.append("File [" + theChosenOne.getAbsolutePath()
+									+ "] non trovato. Eccezione: " + StackTrace.get(e));
+							Main.this.reader = new StringReader(Main.xmlFallback);
+						}
+					} else {
+						Main.this.reader = new StringReader(Main.xmlFallback);
+					}
+				} catch (final Throwable e) {
+					Main.this.jTA.append("exception: " + StackTrace.get(e));
+				}
+			}
+			
+			try {
+				db = factory.newDocumentBuilder();
+				final InputSource inStream = new InputSource();
+				inStream.setCharacterStream(this.reader);
+				final Document doc = db.parse(inStream);
+				this.reader.close();
+				final NodeList projects = doc.getElementsByTagName("Project");
+				processProjects(projects);
+			} catch (final Exception e) {
+				StackTrace.showStacktrace(this.rootContainer, e);
+			}
+		}
 	}
 	
 	BufferedReader getBufferedReader(final String urlStr) throws Throwable {
@@ -175,7 +258,7 @@ public class Main extends AbstractKindlet {
 	
 	Reader reader;
 	
-	private void initialStart() {
+	void initialStart() {
 		this.ctx.setSubTitle("Sponsored by Jhack");
 		
 		createMenu();
@@ -183,56 +266,6 @@ public class Main extends AbstractKindlet {
 		this.rootContainer.setLayout(new BorderLayout());
 		this.rootContainer.requestFocus();
 		this.rootContainer.add(new JScrollPane(this.jTA));
-		
-		final DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
-		final DocumentBuilder db;
-		
-		if (false) {
-			try {
-				Main.this.reader = getBufferedReader(JENKINS_CC_XML_URL);
-			} catch (final Throwable e) {
-				Main.this.jTA.append("exception: " + StackTrace.get(e));
-				try {
-					Main.this.reader = getBufferedReader("http://code.praqma.net/ci/cc.xml");
-				} catch (final Throwable f) {
-					Main.this.jTA.append("exception: " + StackTrace.get(e));
-					Main.this.reader = new StringReader(Main.xmlFallback);
-				}
-			}
-		} else {
-			final File ccFJ = new File("/mnt/us/cc/", "cc-j.xml");
-			final File ccFP = new File("/mnt/us/cc/", "cc-p.xml");
-			
-			try {
-				if ((ccFJ.exists() && (ccFJ.length() > 0)) || (ccFP.exists() && (ccFP.length() > 0))) {
-					final File theChosenOne = (ccFJ.exists() && (ccFJ.length() > 0)) ? ccFJ : ccFP;
-					try {
-						final FileReader fR = new FileReader(theChosenOne);
-						Main.this.reader = fR;
-					} catch (final Throwable e) {
-						Main.this.jTA.append("File [" + theChosenOne.getAbsolutePath() + "] non trovato. Eccezione: "
-								+ StackTrace.get(e));
-						Main.this.reader = new StringReader(Main.xmlFallback);
-					}
-				} else {
-					Main.this.reader = new StringReader(Main.xmlFallback);
-				}
-			} catch (final Throwable e) {
-				Main.this.jTA.append("exception: " + StackTrace.get(e));
-			}
-		}
-		
-		try {
-			db = factory.newDocumentBuilder();
-			final InputSource inStream = new InputSource();
-			inStream.setCharacterStream(this.reader);
-			final Document doc = db.parse(inStream);
-			this.reader.close();
-			final NodeList projects = doc.getElementsByTagName("Project");
-			processProjects(projects);
-		} catch (final Exception e) {
-			StackTrace.showStacktrace(this.rootContainer, e);
-		}
 		
 		this.isFirstStart = false;
 	}
@@ -271,6 +304,24 @@ public class Main extends AbstractKindlet {
 		// this.ctx.setMenu(kMenu);
 	}
 	
+	// Format: "2012-04-29T14:23:58Z"
+	public static String getTimeFromDateTime(final String dateTimeStr) {
+		final SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'");
+		simpleDateFormat.setLenient(false);
+		String timeStr;
+		try {
+			final Date date = simpleDateFormat.parse(dateTimeStr);
+			Format formatter;
+			formatter = new SimpleDateFormat("HH:mm:ss");
+			timeStr = formatter.format(date);
+		} catch (final ParseException e) {
+			e.printStackTrace();
+			timeStr = "N/A";
+		}
+		
+		return timeStr;
+	}
+	
 	// <Project
 	// webUrl="http://codebuilder.unimatica.lan:8080/job/Unilet/"
 	// name="Unilet"
@@ -295,7 +346,10 @@ public class Main extends AbstractKindlet {
 			final String webUrlStr = (webUrl != null) ? webUrl.getTextContent() : "?";
 			final String nameStr = (name != null) ? name.getTextContent() : "?";
 			final String lastBuildLabelStr = (lastBuildLabel != null) ? lastBuildLabel.getTextContent() : "?";
-			final String lastBuildTimeStr = (lastBuildTime != null) ? lastBuildTime.getTextContent() : "?";
+			
+			final String lastBuildDateTimeStr = (lastBuildTime != null) ? lastBuildTime.getTextContent() : "?";
+			final String lastBuildTimeStr = getTimeFromDateTime(lastBuildDateTimeStr);
+			
 			final String lastBuildStatusStr = (lastBuildStatus != null) ? lastBuildStatus.getTextContent() : "?";
 			final String activityStr = (activity != null) ? activity.getTextContent() : "?";
 			colsArr[0] = nameStr;

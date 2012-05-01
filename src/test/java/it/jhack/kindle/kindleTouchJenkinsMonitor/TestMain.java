@@ -1,7 +1,18 @@
 package it.jhack.kindle.kindleTouchJenkinsMonitor;
 
+import junit.framework.TestCase;
 
-public class TestMain {
+import org.junit.Assert;
+
+public class TestMain extends TestCase {
+	
+	public void testGetTimeStrFromDateTimeStr() {
+		final String dateTimeStr = "2012-03-19T07:36:40Z";
+		final String timeStr = Main.getTimeFromDateTime(dateTimeStr);
+		System.out.println(timeStr);
+		Assert.assertTrue("07:36:40".equals(timeStr));
+		
+	}
 	
 	public void downloadCcXML() {
 		// Reader reader;
