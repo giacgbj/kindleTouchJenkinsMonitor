@@ -4,12 +4,8 @@ import java.awt.BorderLayout;
 import java.awt.Container;
 import java.awt.EventQueue;
 import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.FileReader;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.io.Reader;
 import java.io.StringReader;
 
@@ -34,12 +30,15 @@ import org.xml.sax.InputSource;
 
 import com.amazon.kindle.kindlet.AbstractKindlet;
 import com.amazon.kindle.kindlet.KindletContext;
+import com.amazon.kindle.kindlet.net.Connectivity;
+import com.amazon.kindle.kindlet.net.ConnectivityHandler;
+import com.amazon.kindle.kindlet.net.NetworkDisabledDetails;
 
-public class Main extends AbstractKindlet {
+public class Main4 extends AbstractKindlet {
 	private static boolean stopped = false;
 	private boolean isFirstStart = true;
 	// private static long startTime = System.currentTimeMillis();
-	private static Logger L = Logger.getLogger(Main.class);
+	private static Logger L = Logger.getLogger(Main4.class);
 	
 	static String JENKINS_CC_XML_URL = "http://codebuilder.unimatica.lan:8080/cc.xml";
 	
@@ -69,11 +68,11 @@ public class Main extends AbstractKindlet {
 			+ "</Projects>";
 	
 	public static boolean isStopped() {
-		return Main.stopped;
+		return Main4.stopped;
 	}
 	
 	public static void setStopped(final boolean isStopped) {
-		Main.stopped = isStopped;
+		Main4.stopped = isStopped;
 	}
 	
 	public static void timeLog(final String msg) {
@@ -91,6 +90,7 @@ public class Main extends AbstractKindlet {
 		
 		this.ctx = context;
 		this.rootContainer = this.ctx.getRootContainer();
+		this.rootContainer.add(new JScrollPane(this.jTA));
 		
 		timeLog("JJJ </CREATE>");
 	}
@@ -101,17 +101,17 @@ public class Main extends AbstractKindlet {
 		synchronized (this) {
 			timeLog("JJJ <START_SYNC>");
 			
-			Main.setStopped(false);
+			Main4.setStopped(false);
 			super.start();
 			
 			if (this.isFirstStart) {
 				
 				timeLog("JJJ <START_INITIAL>");
 				
-				if (!Main.isStopped()) {
+				if (!Main4.isStopped()) {
 					final Runnable runnable = new Runnable() {
 						public void run() {
-							Main.this.initialStart();
+							Main4.this.initialStart();
 						}
 					};
 					timeLog("JJJ <START_RUNNABLE>");
@@ -156,7 +156,10 @@ public class Main extends AbstractKindlet {
 				
 				this.jTA.append("RESPONSE: ");
 				
-				rd = new BufferedReader(new InputStreamReader(responseIS));
+				rd = null;
+				// final InputStream responseIS = get.getResponseBodyAsStream();
+				//
+				// rd = new BufferedReader(new InputStreamReader(responseIS));
 				
 			} catch (final HttpException e) {
 				this.jTA.append("HttpException: " + StackTrace.get(e));
@@ -182,57 +185,61 @@ public class Main extends AbstractKindlet {
 		
 		this.rootContainer.setLayout(new BorderLayout());
 		this.rootContainer.requestFocus();
-		this.rootContainer.add(new JScrollPane(this.jTA));
 		
 		final DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
 		final DocumentBuilder db;
 		
+		try {
+			
+			final Connectivity connectivity = this.ctx.getConnectivity();
+			connectivity.requestConnectivity(false);
+			
+			this.jTA.append("Rete: " + (connectivity.isConnected() ? "SU" : "GIU'"));
+			connectivity.submitSingleAttemptConnectivityRequest(new ConnectivityHandler() {
+				
+				public void disabled(final NetworkDisabledDetails nDD) throws InterruptedException {
+					Main4.this.jTA.append("Network not working: " + nDD.getReason());
+					
+				}
+				
+				public void connected() throws InterruptedException {
+					
+					if (false) {
+						try {
+							Main4.this.reader = getBufferedReader("http://code.praqma.net/ci/cc.xml");
+						} catch (final Throwable e) {
+							Main4.this.jTA.append("exception: " + StackTrace.get(e));
+							try {
+								Main4.this.reader = getBufferedReader("http://code.praqma.net/ci/cc.xml");
+							} catch (final Throwable f) {
+								Main4.this.jTA.append("exception: " + StackTrace.get(e));
+								Main4.this.reader = new StringReader(Main4.xmlFallback);
+							}
+						}
+					} else {
+						Main4.this.reader = new StringReader(Main4.xmlFallback);
+						
+					}
+				}
+			}, true);
+			
+		} catch (final Throwable e) {
+			this.jTA.append("exception: " + StackTrace.get(e));
+		}
+		
 		if (false) {
 			try {
-				Main.this.reader = getBufferedReader(JENKINS_CC_XML_URL);
-			} catch (final Throwable e) {
-				Main.this.jTA.append("exception: " + StackTrace.get(e));
-				try {
-					Main.this.reader = getBufferedReader("http://code.praqma.net/ci/cc.xml");
-				} catch (final Throwable f) {
-					Main.this.jTA.append("exception: " + StackTrace.get(e));
-					Main.this.reader = new StringReader(Main.xmlFallback);
-				}
-			}
-		} else {
-			Main.this.jTA.append("AAA");
-			final File ccF = new File("/mnt/us/cc.xml");
-			Main.this.jTA.append("BBB");
-			if (ccF.exists()) {
-				Main.this.jTA.append("CCC");
-				try {
-					final FileReader fR = new FileReader(ccF);
-					Main.this.jTA.append("DDD");
-					Main.this.reader = fR;
-				} catch (final FileNotFoundException e) {
-					Main.this.jTA.append("File [" + ccF.getAbsolutePath() + "] non trovato. Eccezione: "
-							+ StackTrace.get(e));
-					Main.this.reader = new StringReader(Main.xmlFallback);
-				}
-			} else {
-				Main.this.jTA.append("HHH");
-				
-				Main.this.reader = new StringReader(Main.xmlFallback);
+				db = factory.newDocumentBuilder();
+				final InputSource inStream = new InputSource();
+				inStream.setCharacterStream(this.reader);
+				final Document doc = db.parse(inStream);
+				this.reader.close();
+				final NodeList projects = doc.getElementsByTagName("Project");
+				processProjects(projects);
+			} catch (final Exception e) {
+				StackTrace.showStacktrace(this.rootContainer, e);
 			}
 		}
-		
-		try {
-			db = factory.newDocumentBuilder();
-			final InputSource inStream = new InputSource();
-			inStream.setCharacterStream(this.reader);
-			final Document doc = db.parse(inStream);
-			this.reader.close();
-			final NodeList projects = doc.getElementsByTagName("Project");
-			processProjects(projects);
-		} catch (final Exception e) {
-			StackTrace.showStacktrace(this.rootContainer, e);
-		}
-		
 		this.isFirstStart = false;
 	}
 	
@@ -240,7 +247,7 @@ public class Main extends AbstractKindlet {
 		timeLog("JJJ <STOP>");
 		this.jTA.append("STOP");
 		
-		Main.setStopped(true);
+		Main4.setStopped(true);
 		
 		synchronized (this) {
 			timeLog("JJJ <STOP_SYNC>");

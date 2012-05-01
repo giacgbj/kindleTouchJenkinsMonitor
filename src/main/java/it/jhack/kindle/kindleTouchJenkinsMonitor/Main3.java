@@ -1,15 +1,14 @@
 package it.jhack.kindle.kindleTouchJenkinsMonitor;
 
+import ixtab.jailbreak.Jailbreak;
+import ixtab.jailbreak.SuicidalKindlet;
+
 import java.awt.BorderLayout;
 import java.awt.Container;
 import java.awt.EventQueue;
 import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.FileReader;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.io.Reader;
 import java.io.StringReader;
 
@@ -32,18 +31,20 @@ import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 import org.xml.sax.InputSource;
 
-import com.amazon.kindle.kindlet.AbstractKindlet;
 import com.amazon.kindle.kindlet.KindletContext;
+import com.amazon.kindle.kindlet.net.Connectivity;
+import com.amazon.kindle.kindlet.net.ConnectivityHandler;
+import com.amazon.kindle.kindlet.net.NetworkDisabledDetails;
 
-public class Main extends AbstractKindlet {
+public class Main3 extends SuicidalKindlet {
 	private static boolean stopped = false;
 	private boolean isFirstStart = true;
 	// private static long startTime = System.currentTimeMillis();
-	private static Logger L = Logger.getLogger(Main.class);
+	private static Logger L = Logger.getLogger(Main3.class);
 	
 	static String JENKINS_CC_XML_URL = "http://codebuilder.unimatica.lan:8080/cc.xml";
-	
 	private KindletContext ctx;
+	
 	static String xmlFallback = "<Projects>"
 			+ "<Project webUrl=\"http://codebuilder.unimatica.lan:8080/job/jAlmawelcome/\" name=\"jAlmawelcome\" lastBuildLabel=\"27\" lastBuildTime=\"2012-04-29T05:01:12Z\" lastBuildStatus=\"Success\" activity=\"Sleeping\"/>"
 			+ "<Project webUrl=\"http://codebuilder.unimatica.lan:8080/job/jFat/\" name=\"jFat\" lastBuildLabel=\"127\" lastBuildTime=\"2012-04-29T14:16:12Z\" lastBuildStatus=\"Success\" activity=\"Sleeping\"/>"
@@ -69,11 +70,11 @@ public class Main extends AbstractKindlet {
 			+ "</Projects>";
 	
 	public static boolean isStopped() {
-		return Main.stopped;
+		return Main3.stopped;
 	}
 	
 	public static void setStopped(final boolean isStopped) {
-		Main.stopped = isStopped;
+		Main3.stopped = isStopped;
 	}
 	
 	public static void timeLog(final String msg) {
@@ -83,35 +84,50 @@ public class Main extends AbstractKindlet {
 		// L.info("JJJ " + msg);
 	}
 	
-	Container rootContainer;
-	final JTextArea jTA = new JTextArea();
+	static Container rootContainer;
+	final static JTextArea jTA = new JTextArea();
 	
-	public void create(final KindletContext context) {
+	protected Jailbreak instantiateJailbreak() {
+		return new MainHackJailbreak();
+	}
+	
+	public void onCreate(final KindletContext context) {
 		timeLog("JJJ <CREATE>");
 		
-		this.ctx = context;
+		// this.ctx = context;
 		this.rootContainer = this.ctx.getRootContainer();
+		this.rootContainer.add(new JScrollPane(this.jTA));
 		
+		if (Main3.this.jailbreak.isAvailable()) {
+			if (((MainHackJailbreak) Main3.this.jailbreak).requestPermissions()) {
+				Main3.jTA.append("JAILBREAK OK");
+			} else {
+				Main3.jTA.append("JAILBREAK YEAH");
+				
+			}
+		} else {
+			Main3.jTA.append("JAILBREAK KO");
+		}
 		timeLog("JJJ </CREATE>");
 	}
 	
-	public void start() {
+	public void onStart() {
 		timeLog("JJJ <START>");
 		
 		synchronized (this) {
 			timeLog("JJJ <START_SYNC>");
 			
-			Main.setStopped(false);
+			Main3.setStopped(false);
 			super.start();
 			
 			if (this.isFirstStart) {
 				
 				timeLog("JJJ <START_INITIAL>");
 				
-				if (!Main.isStopped()) {
+				if (!Main3.isStopped()) {
 					final Runnable runnable = new Runnable() {
 						public void run() {
-							Main.this.initialStart();
+							Main3.this.initialStart();
 						}
 					};
 					timeLog("JJJ <START_RUNNABLE>");
@@ -133,42 +149,43 @@ public class Main extends AbstractKindlet {
 	BufferedReader getBufferedReader(final String urlStr) {
 		
 		BufferedReader rd = null;
-		if (true) {
-			final HttpClient client = new HttpClient();
-			final GetMethod get = new GetMethod(urlStr);
+		final HttpClient client = new HttpClient();
+		final GetMethod get = new GetMethod(urlStr);
+		
+		get.getParams().setParameter(HttpMethodParams.SO_TIMEOUT, "10000");
+		client.getParams().setParameter(HttpMethodParams.RETRY_HANDLER, new DefaultHttpMethodRetryHandler(3, false));
+		this.jTA.append("\nCONNESSIONE A [" + urlStr + "]");
+		
+		try {
+			this.jTA.append("\nPRIMA ANCORA");
 			
-			get.getParams().setParameter(HttpMethodParams.SO_TIMEOUT, "10000");
-			client.getParams()
-					.setParameter(HttpMethodParams.RETRY_HANDLER, new DefaultHttpMethodRetryHandler(3, false));
-			this.jTA.append("CONNESSIONE A [" + urlStr + "]");
+			final int statusCode = client.executeMethod(get);
 			
-			try {
-				this.jTA.append("PRIMA ANCORA");
-				
-				final int statusCode = client.executeMethod(get);
-				
-				if (statusCode != HttpStatus.SC_OK) {
-					this.jTA.append("Method failed: " + get.getStatusLine());
-				}
-				this.jTA.append("PRIMA");
-				
-				final InputStream responseIS = get.getResponseBodyAsStream();
-				
-				this.jTA.append("RESPONSE: ");
-				
-				rd = new BufferedReader(new InputStreamReader(responseIS));
-				
-			} catch (final HttpException e) {
-				this.jTA.append("HttpException: " + StackTrace.get(e));
-			} catch (final IOException e) {
-				this.jTA.append("IOException: " + StackTrace.get(e));
-			} catch (final Throwable e) {
-				this.jTA.append("Throwable: " + StackTrace.get(e));
-			} finally {
-				this.jTA.append("Finally");
-				get.releaseConnection();
+			if (statusCode != HttpStatus.SC_OK) {
+				this.jTA.append("Method failed: " + get.getStatusLine());
 			}
+			this.jTA.append("\nPRIMA");
+			
+			final InputStream responseIS = get.getResponseBodyAsStream();
+			
+			this.jTA.append("\nRESPONSE: ");
+			
+			rd = null;
+			// final InputStream responseIS = get.getResponseBodyAsStream();
+			//
+			// rd = new BufferedReader(new InputStreamReader(responseIS));
+			
+		} catch (final HttpException e) {
+			this.jTA.append("HttpException: " + StackTrace.get(e));
+		} catch (final IOException e) {
+			this.jTA.append("IOException: " + StackTrace.get(e));
+		} catch (final Throwable e) {
+			this.jTA.append("Throwable: " + StackTrace.get(e));
+		} finally {
+			this.jTA.append("Finally");
+			get.releaseConnection();
 		}
+		
 		return rd;
 		
 	}
@@ -187,60 +204,66 @@ public class Main extends AbstractKindlet {
 		final DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
 		final DocumentBuilder db;
 		
+		try {
+			
+			final Connectivity connectivity = this.ctx.getConnectivity();
+			// connectivity.requestConnectivity(false);
+			
+			this.jTA.append("Rete: " + (connectivity.isConnected() ? "SU\n" : "GIU'\n"));
+			connectivity.submitSingleAttemptConnectivityRequest(new ConnectivityHandler() {
+				
+				public void disabled(final NetworkDisabledDetails nDD) throws InterruptedException {
+					Main3.this.jTA.append("Network not working: " + nDD.getReason());
+					
+				}
+				
+				public void connected() throws InterruptedException {
+					if (true) {
+						try {
+							Main3.this.reader = getBufferedReader("http://code.praqma.net/ci/cc.xml");
+						} catch (final Throwable e) {
+							Main3.this.jTA.append("exception: " + StackTrace.get(e));
+							try {
+								Main3.this.reader = getBufferedReader("http://code.praqma.net/ci/cc.xml");
+							} catch (final Throwable f) {
+								Main3.this.jTA.append("exception: " + StackTrace.get(e));
+								Main3.this.reader = new StringReader(Main3.xmlFallback);
+							}
+						}
+					} else {
+						Main3.this.reader = new StringReader(Main3.xmlFallback);
+						
+					}
+				}
+			}, false);
+			
+		} catch (final Throwable e) {
+			Main3.this.reader = new StringReader(Main3.xmlFallback);
+		}
+		
 		if (false) {
 			try {
-				Main.this.reader = getBufferedReader(JENKINS_CC_XML_URL);
-			} catch (final Throwable e) {
-				Main.this.jTA.append("exception: " + StackTrace.get(e));
-				try {
-					Main.this.reader = getBufferedReader("http://code.praqma.net/ci/cc.xml");
-				} catch (final Throwable f) {
-					Main.this.jTA.append("exception: " + StackTrace.get(e));
-					Main.this.reader = new StringReader(Main.xmlFallback);
-				}
+				db = factory.newDocumentBuilder();
+				final InputSource inStream = new InputSource();
+				inStream.setCharacterStream(this.reader);
+				final Document doc = db.parse(inStream);
+				this.reader.close();
+				final NodeList projects = doc.getElementsByTagName("Project");
+				processProjects(projects);
+			} catch (final Exception e) {
+				StackTrace.showStacktrace(this.rootContainer, e);
 			}
 		} else {
-			Main.this.jTA.append("AAA");
-			final File ccF = new File("/mnt/us/cc.xml");
-			Main.this.jTA.append("BBB");
-			if (ccF.exists()) {
-				Main.this.jTA.append("CCC");
-				try {
-					final FileReader fR = new FileReader(ccF);
-					Main.this.jTA.append("DDD");
-					Main.this.reader = fR;
-				} catch (final FileNotFoundException e) {
-					Main.this.jTA.append("File [" + ccF.getAbsolutePath() + "] non trovato. Eccezione: "
-							+ StackTrace.get(e));
-					Main.this.reader = new StringReader(Main.xmlFallback);
-				}
-			} else {
-				Main.this.jTA.append("HHH");
-				
-				Main.this.reader = new StringReader(Main.xmlFallback);
-			}
+			Main3.this.jTA.append("\nRiattiva parsing");
 		}
-		
-		try {
-			db = factory.newDocumentBuilder();
-			final InputSource inStream = new InputSource();
-			inStream.setCharacterStream(this.reader);
-			final Document doc = db.parse(inStream);
-			this.reader.close();
-			final NodeList projects = doc.getElementsByTagName("Project");
-			processProjects(projects);
-		} catch (final Exception e) {
-			StackTrace.showStacktrace(this.rootContainer, e);
-		}
-		
 		this.isFirstStart = false;
 	}
 	
-	public void stop() {
+	public void onStop() {
 		timeLog("JJJ <STOP>");
 		this.jTA.append("STOP");
 		
-		Main.setStopped(true);
+		Main3.setStopped(true);
 		
 		synchronized (this) {
 			timeLog("JJJ <STOP_SYNC>");
@@ -251,7 +274,7 @@ public class Main extends AbstractKindlet {
 		timeLog("JJJ </STOP>");
 	}
 	
-	public void destroy() {
+	public void onDestroy() {
 		timeLog("JJJ </DESTROY>");
 		this.jTA.append("DESTROY");
 		
@@ -321,4 +344,5 @@ public class Main extends AbstractKindlet {
 		final JScrollPane scrollPane = new JScrollPane(table);
 		this.rootContainer.add(scrollPane);
 	}
+	
 }
