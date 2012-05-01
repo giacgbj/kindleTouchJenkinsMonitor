@@ -5,19 +5,22 @@ import java.awt.Container;
 import java.awt.EventQueue;
 import java.io.BufferedReader;
 import java.io.IOException;
-import java.io.InputStreamReader;
+import java.io.InputStream;
 import java.io.Reader;
 import java.io.StringReader;
 
 import javax.swing.JScrollPane;
 import javax.swing.JTable;
+import javax.swing.JTextArea;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 
-import org.apache.http.HttpResponse;
-import org.apache.http.client.HttpClient;
-import org.apache.http.client.methods.HttpGet;
-import org.apache.http.impl.client.DefaultHttpClient;
+import org.apache.commons.httpclient.DefaultHttpMethodRetryHandler;
+import org.apache.commons.httpclient.HttpClient;
+import org.apache.commons.httpclient.HttpException;
+import org.apache.commons.httpclient.HttpStatus;
+import org.apache.commons.httpclient.methods.GetMethod;
+import org.apache.commons.httpclient.params.HttpMethodParams;
 import org.apache.log4j.Logger;
 import org.w3c.dom.Document;
 import org.w3c.dom.NamedNodeMap;
@@ -27,6 +30,9 @@ import org.xml.sax.InputSource;
 
 import com.amazon.kindle.kindlet.AbstractKindlet;
 import com.amazon.kindle.kindlet.KindletContext;
+import com.amazon.kindle.kindlet.net.Connectivity;
+import com.amazon.kindle.kindlet.net.ConnectivityHandler;
+import com.amazon.kindle.kindlet.net.NetworkDisabledDetails;
 
 public class Main extends AbstractKindlet {
 	private static boolean stopped = false;
@@ -77,12 +83,14 @@ public class Main extends AbstractKindlet {
 	}
 	
 	Container rootContainer;
+	final JTextArea jTA = new JTextArea();
 	
 	public void create(final KindletContext context) {
 		timeLog("JJJ <CREATE>");
 		
 		this.ctx = context;
 		this.rootContainer = this.ctx.getRootContainer();
+		this.rootContainer.add(new JScrollPane(this.jTA));
 		
 		timeLog("JJJ </CREATE>");
 	}
@@ -101,7 +109,6 @@ public class Main extends AbstractKindlet {
 				timeLog("JJJ <START_INITIAL>");
 				
 				if (!Main.isStopped()) {
-					
 					final Runnable runnable = new Runnable() {
 						public void run() {
 							Main.this.initialStart();
@@ -123,15 +130,53 @@ public class Main extends AbstractKindlet {
 		timeLog("JJJ </START*>");
 	}
 	
-	static BufferedReader getBufferedReader(final String urlStr) throws IOException {
-		final HttpClient client = new DefaultHttpClient();
-		final HttpGet get = new HttpGet(urlStr);
+	BufferedReader getBufferedReader(final String urlStr) {
 		
-		final HttpResponse response = client.execute(get);
-		final BufferedReader rd = new BufferedReader(new InputStreamReader(response.getEntity().getContent()));
+		BufferedReader rd = null;
+		if (true) {
+			final HttpClient client = new HttpClient();
+			final GetMethod get = new GetMethod(urlStr);
+			
+			get.getParams().setParameter(HttpMethodParams.SO_TIMEOUT, "10000");
+			client.getParams()
+					.setParameter(HttpMethodParams.RETRY_HANDLER, new DefaultHttpMethodRetryHandler(3, false));
+			this.jTA.append("CONNESSIONE A [" + urlStr + "]");
+			
+			try {
+				this.jTA.append("PRIMA ANCORA");
+				
+				final int statusCode = client.executeMethod(get);
+				
+				if (statusCode != HttpStatus.SC_OK) {
+					this.jTA.append("Method failed: " + get.getStatusLine());
+				}
+				this.jTA.append("PRIMA");
+				
+				final InputStream responseIS = get.getResponseBodyAsStream();
+				
+				this.jTA.append("RESPONSE: ");
+				
+				rd = null;
+				// final InputStream responseIS = get.getResponseBodyAsStream();
+				//
+				// rd = new BufferedReader(new InputStreamReader(responseIS));
+				
+			} catch (final HttpException e) {
+				this.jTA.append("HttpException: " + StackTrace.get(e));
+			} catch (final IOException e) {
+				this.jTA.append("IOException: " + StackTrace.get(e));
+			} catch (final Throwable e) {
+				this.jTA.append("Throwable: " + StackTrace.get(e));
+			} finally {
+				this.jTA.append("Finally");
+				get.releaseConnection();
+			}
+		}
 		return rd;
 		
 	}
+	
+	Reader reader;
 	
 	private void initialStart() {
 		this.ctx.setSubTitle("Sponsored by Jhack");
@@ -144,34 +189,45 @@ public class Main extends AbstractKindlet {
 		final DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
 		final DocumentBuilder db;
 		
-		Reader reader;
-		if (true) {
-			try {
-				reader = getBufferedReader(JENKINS_CC_XML_URL);
-			} catch (final Throwable e) {
-				StackTrace.showStacktrace(this.rootContainer, e);
+		try {
+			
+			final Connectivity connectivity = this.ctx.getConnectivity();
+			connectivity.requestConnectivity(false);
+			
+			this.jTA.append("Rete: " + (connectivity.isConnected() ? "SU" : "GIU'"));
+			connectivity.submitSingleAttemptConnectivityRequest(new ConnectivityHandler() {
 				
-				try {
-					reader = getBufferedReader("http:code.praqma.net/ci/cc.xml");
-				} catch (final Throwable f) {
-					StackTrace.showStacktrace(this.rootContainer, f);
+				public void disabled(final NetworkDisabledDetails nDD) throws InterruptedException {
+					Main.this.jTA.append("Network not working: " + nDD.getReason());
 					
-					reader = new StringReader(Main.xmlFallback);
 				}
 				
-			}
-		} else {
-			reader = new StringReader(Main.xmlFallback);
+				public void connected() throws InterruptedException {
+					try {
+						Main.this.reader = getBufferedReader("http://code.praqma.net/ci/cc.xml");
+					} catch (final Throwable e) {
+						Main.this.jTA.append("exception: " + StackTrace.get(e));
+						try {
+							Main.this.reader = getBufferedReader("http://code.praqma.net/ci/cc.xml");
+						} catch (final Throwable f) {
+							Main.this.jTA.append("exception: " + StackTrace.get(e));
+							Main.this.reader = new StringReader(Main.xmlFallback);
+						}
+					}
+				}
+			}, true);
 			
+		} catch (final Throwable e) {
+			this.jTA.append("exception: " + StackTrace.get(e));
 		}
 		
 		if (false) {
 			try {
 				db = factory.newDocumentBuilder();
 				final InputSource inStream = new InputSource();
-				inStream.setCharacterStream(reader);
+				inStream.setCharacterStream(this.reader);
 				final Document doc = db.parse(inStream);
-				reader.close();
+				this.reader.close();
 				final NodeList projects = doc.getElementsByTagName("Project");
 				processProjects(projects);
 			} catch (final Exception e) {
@@ -183,6 +239,7 @@ public class Main extends AbstractKindlet {
 	
 	public void stop() {
 		timeLog("JJJ <STOP>");
+		this.jTA.append("STOP");
 		
 		Main.setStopped(true);
 		
@@ -197,6 +254,7 @@ public class Main extends AbstractKindlet {
 	
 	public void destroy() {
 		timeLog("JJJ </DESTROY>");
+		this.jTA.append("DESTROY");
 		
 		this.rootContainer.setLayout(null);
 		this.rootContainer.removeAll();
