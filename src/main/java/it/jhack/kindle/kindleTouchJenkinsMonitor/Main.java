@@ -5,11 +5,8 @@ import java.awt.Container;
 import java.awt.EventQueue;
 import java.io.BufferedReader;
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.io.Reader;
 import java.io.StringReader;
 
@@ -130,7 +127,7 @@ public class Main extends AbstractKindlet {
 		timeLog("JJJ </START*>");
 	}
 	
-	BufferedReader getBufferedReader(final String urlStr) {
+	BufferedReader getBufferedReader(final String urlStr) throws Throwable {
 		
 		BufferedReader rd = null;
 		if (true) {
@@ -150,20 +147,23 @@ public class Main extends AbstractKindlet {
 				if (statusCode != HttpStatus.SC_OK) {
 					this.jTA.append("Method failed: " + get.getStatusLine());
 				}
-				this.jTA.append("PRIMA");
 				
-				final InputStream responseIS = get.getResponseBodyAsStream();
-				
-				this.jTA.append("RESPONSE: ");
-				
-				rd = new BufferedReader(new InputStreamReader(responseIS));
+				rd = null;
+				// this.jTA.append("PRIMA");
+				//
+				// final InputStream responseIS = get.getResponseBodyAsStream();
+				//
+				// this.jTA.append("RESPONSE: ");
+				//
+				// rd = new BufferedReader(new InputStreamReader(responseIS));
 				
 			} catch (final HttpException e) {
 				this.jTA.append("HttpException: " + StackTrace.get(e));
+				throw e;
 			} catch (final IOException e) {
 				this.jTA.append("IOException: " + StackTrace.get(e));
-			} catch (final Throwable e) {
-				this.jTA.append("Throwable: " + StackTrace.get(e));
+				throw e;
+				
 			} finally {
 				this.jTA.append("Finally");
 				get.releaseConnection();
@@ -200,24 +200,25 @@ public class Main extends AbstractKindlet {
 				}
 			}
 		} else {
-			Main.this.jTA.append("AAA");
-			final File ccF = new File("/mnt/us/cc.xml");
-			Main.this.jTA.append("BBB");
-			if (ccF.exists()) {
-				Main.this.jTA.append("CCC");
-				try {
-					final FileReader fR = new FileReader(ccF);
-					Main.this.jTA.append("DDD");
-					Main.this.reader = fR;
-				} catch (final FileNotFoundException e) {
-					Main.this.jTA.append("File [" + ccF.getAbsolutePath() + "] non trovato. Eccezione: "
-							+ StackTrace.get(e));
+			final File ccFJ = new File("/mnt/us/cc/", "cc-j.xml");
+			final File ccFP = new File("/mnt/us/cc/", "cc-p.xml");
+			
+			try {
+				if ((ccFJ.exists() && (ccFJ.length() > 0)) || (ccFP.exists() && (ccFP.length() > 0))) {
+					final File theChosenOne = (ccFJ.exists() && (ccFJ.length() > 0)) ? ccFJ : ccFP;
+					try {
+						final FileReader fR = new FileReader(theChosenOne);
+						Main.this.reader = fR;
+					} catch (final Throwable e) {
+						Main.this.jTA.append("File [" + theChosenOne.getAbsolutePath() + "] non trovato. Eccezione: "
+								+ StackTrace.get(e));
+						Main.this.reader = new StringReader(Main.xmlFallback);
+					}
+				} else {
 					Main.this.reader = new StringReader(Main.xmlFallback);
 				}
-			} else {
-				Main.this.jTA.append("HHH");
-				
-				Main.this.reader = new StringReader(Main.xmlFallback);
+			} catch (final Throwable e) {
+				Main.this.jTA.append("exception: " + StackTrace.get(e));
 			}
 		}
 		
